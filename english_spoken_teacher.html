@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0f172a">
+<meta name="description" content="AI English Teacher - Spoken English Practice">
+<link rel="manifest" href="english_manifest.json">
+<title>AI English Teacher</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f172a;--card:#1e293b;--accent:#38bdf8;--purple:#a78bfa;--green:#4ade80;--red:#f87171;--text:#e2e8f0;--muted:#94a3b8;--border:#334155}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:80px}
+header{position:sticky;top:0;z-index:10;text-align:center;padding:18px 14px 14px;background:linear-gradient(135deg,#0f172a,#1e1b4b);border-bottom:1px solid var(--border)}
+h1{font-size:1.35rem;background:linear-gradient(90deg,var(--accent),var(--purple));-webkit-background-clip:text;color:transparent}
+header p{font-size:.8rem;color:var(--muted);margin-top:4px}
+.tabs{display:flex;gap:7px;overflow:auto;padding:10px;background:var(--card);border-bottom:1px solid var(--border)}
+.tab{border:1px solid var(--border);background:transparent;color:var(--muted);padding:9px 14px;border-radius:20px;white-space:nowrap}
+.tab.active{background:var(--accent);color:#082f49;font-weight:700}
+main{max-width:760px;margin:auto}
+.section{display:none;padding:14px}.section.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
+.lesson{cursor:pointer}.lesson:hover{border-color:var(--accent)}
+.lesson h3{color:var(--accent);margin-bottom:5px}.lesson p{color:var(--muted);font-size:.88rem}
+button{border:0;border-radius:13px;padding:12px 14px;font-weight:700;cursor:pointer;background:#334155;color:var(--text)}
+button.primary{background:var(--accent);color:#082f49}
+button.green{background:var(--green);color:#052e16}
+button.red{background:var(--red);color:#450a0a}
+button:disabled{opacity:.5}
+.row{display:flex;gap:9px;flex-wrap:wrap}.row button{flex:1;min-width:120px}
+.chat{max-height:330px;overflow:auto;margin-bottom:12px}
+.bubble{padding:11px 13px;border-radius:15px;margin:8px 0;line-height:1.45}
+.teacher{background:#1e3a5f}.user{background:#312e81;margin-left:12%}
+.label{display:block;color:var(--muted);font-size:.7rem;margin-bottom:3px}
+.mic{font-size:2.5rem;width:95px;height:95px;border-radius:50%;display:block;margin:18px auto;background:#172554}
+.status{text-align:center;color:var(--muted);min-height:24px}
+.progress{height:12px;background:#0f172a;border-radius:10px;overflow:hidden}.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));width:0}
+.stat{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:#0f172a;color:var(--text);margin:8px 0}
+.option{width:100%;text-align:left;margin:5px 0}
+.small{font-size:.8rem;color:var(--muted)}
+footer{position:fixed;bottom:0;left:0;right:0;background:#111827;border-top:1px solid var(--border);padding:9px;text-align:center;color:var(--muted);font-size:.75rem}
+</style>
+</head>
+<body>
+<header><h1>🗣️ AI English Teacher</h1><p>Speak • Listen • Learn • Improve</p></header>
+
+<nav class="tabs">
+<button class="tab active" data-tab="home">Home</button>
+<button class="tab" data-tab="speak">Speak</button>
+<button class="tab" data-tab="lessons">Lessons</button>
+<button class="tab" data-tab="quiz">Quiz</button>
+<button class="tab" data-tab="progress">Progress</button>
+</nav>
+
+<main>
+<section id="home" class="section active">
+<div class="card">
+<h2>Welcome 👋</h2><p class="small" style="margin-top:7px">Practice English every day. Start with speaking, listening and simple conversations.</p>
+<div class="row" style="margin-top:14px"><button class="primary" onclick="showTab('speak')">🎤 Start Speaking</button><button onclick="showTab('lessons')">📚 Lessons</button></div>
+</div>
+<div class="card">
+<h3>Today's Goal</h3><p class="small">Complete one speaking practice and one quiz.</p>
+<div class="progress" style="margin-top:10px"><i id="homeProgress"></i></div>
+<p id="goalText" class="small" style="margin-top:7px">0% completed</p>
+</div>
+<div class="card">
+<h3>Quick Sentences</h3>
+<p style="margin-top:9px">“Hello, how are you?”</p>
+<button style="margin-top:8px" onclick="speak('Hello, how are you?')">🔊 Listen</button>
+</div>
+</section>
+
+<section id="speak" class="section">
+<div class="card">
+<h2>🎤 Speaking Practice</h2>
+<p class="small" style="margin-top:6px">Press the microphone and speak an English sentence.</p>
+<div id="micStatus" class="status">Ready</div>
+<button class="mic" id="micBtn" onclick="startListening()">🎤</button>
+<div id="transcript" class="bubble user">Your speech will appear here.</div>
+<div class="row">
+<button class="primary" onclick="speak(currentSentence)">🔊 Teacher Voice</button>
+<button onclick="newSentence()">🔄 New Sentence</button>
+</div>
+</div>
+<div class="card">
+<h3>Teacher</h3><div id="teacherReply" class="bubble teacher"><span class="label">Teacher</span>Say: “I am learning English.”</div>
+</div>
+</section>
+
+<section id="lessons" class="section">
+<div class="card lesson" onclick="openLesson('Basic Introduction','My name is Adil. I am a BCA student. I am learning English.')"><h3>Lesson 1 — Introduction</h3><p>Learn how to introduce yourself.</p></div>
+<div class="card lesson" onclick="openLesson('Daily Conversation','How are you? I am fine. What are you doing? I am studying.')"><h3>Lesson 2 — Daily Conversation</h3><p>Useful everyday sentences.</p></div>
+<div class="card lesson" onclick="openLesson('Job Interview','Tell me about yourself. I am a BCA student and I have basic programming skills.')"><h3>Lesson 3 — Job Interview</h3><p>Practice common interview English.</p></div>
+<div class="card lesson" onclick="openLesson('Workplace English','Could you please explain this task? I will complete it on time.')"><h3>Lesson 4 — Workplace English</h3><p>Useful office sentences.</p></div>
+<div id="lessonOutput" class="card" style="display:none"></div>
+</section>
+
+<section id="quiz" class="section">
+<div class="card">
+<h2>📝 English Quiz</h2>
+<div id="quizBox"></div>
+</div>
+</section>
+
+<section id="progress" class="section">
+<div class="card">
+<h2>📊 Your Progress</h2>
+<div class="stat"><span>Speaking sessions</span><b id="sessions">0</b></div>
+<div class="stat"><span>Quiz score</span><b id="score">0</b></div>
+<div class="stat"><span>Lessons opened</span><b id="lessonsDone">0</b></div>
+<button class="red" style="margin-top:15px" onclick="resetProgress()">Reset Progress</button>
+</div>
+<div class="card">
+<h3>Install App</h3><p class="small" style="margin:6px 0 12px">If your browser supports PWA installation, use the browser menu and choose “Install app” or “Add to Home screen”.</p>
+<button class="primary" id="installBtn" style="display:none">📱 Install App</button>
+</div>
+</section>
+</main>
+<footer>AI English Teacher • Practice every day</footer>
+
+<script>
+const state=JSON.parse(localStorage.getItem('engTeacher')||'{"sessions":0,"score":0,"lessons":0}');
+let currentSentence='I am learning English.';
+let deferredPrompt=null;
+const sentences=['I am learning English.','My name is Adil.','I am a BCA student.','I want to improve my English.','I can speak English with confidence.'];
+
+function save(){localStorage.setItem('engTeacher',JSON.stringify(state));updateProgress()}
+function updateProgress(){
+document.getElementById('sessions').textContent=state.sessions;
+document.getElementById('score').textContent=state.score;
+document.getElementById('lessonsDone').textContent=state.lessons;
+let p=Math.min(100,(state.sessions>0?50:0)+(state.score>0?25:0)+(state.lessons>0?25:0));
+document.getElementById('homeProgress').style.width=p+'%';
+document.getElementById('goalText').textContent=p+'% completed';
+}
+function showTab(id){
+document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
+document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+document.querySelector(`[data-tab="${id}"]`).classList.add('active');
+window.scrollTo(0,0);
+}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+
+function speak(text){
+if(!('speechSynthesis' in window)){alert('Text-to-Speech is not supported in this browser.');return}
+speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.85;speechSynthesis.speak(u);
+}
+function newSentence(){
+currentSentence=sentences[Math.floor(Math.random()*sentences.length)];
+document.getElementById('teacherReply').innerHTML='<span class="label">Teacher</span>Say: “'+currentSentence+'”';
+speak(currentSentence);
+}
+function startListening(){
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR){document.getElementById('micStatus').textContent='Speech recognition is not supported. Try Chrome.';return}
+const r=new SR();r.lang='en-US';r.interimResults=false;r.maxAlternatives=1;
+document.getElementById('micStatus').textContent='Listening...';
+r.onresult=e=>{
+let text=e.results[0][0].transcript;
+document.getElementById('transcript').textContent=text;
+document.getElementById('micStatus').textContent='Good! Speech received.';
+state.sessions++;save();
+document.getElementById('teacherReply').innerHTML='<span class="label">Teacher</span>Nice! Keep practicing. Try another sentence.';
+};
+r.onerror=e=>document.getElementById('micStatus').textContent='Microphone error: '+e.error;
+r.onend=()=>{if(document.getElementById('micStatus').textContent==='Listening...')document.getElementById('micStatus').textContent='Ready'};
+r.start();
+}
+function openLesson(title,text){
+state.lessons=Math.max(state.lessons,1);save();
+let box=document.getElementById('lessonOutput');box.style.display='block';
+box.innerHTML='<h3>'+title+'</h3><p style="margin-top:9px">'+text+'</p><button class="primary" style="margin-top:10px" onclick="speak('+JSON.stringify(text)+')">🔊 Listen</button>';
+box.scrollIntoView({behavior:'smooth'});
+}
+const questions=[
+{q:'Choose the correct sentence:',o:['I am student.','I am a student.','I student am.'],a:1},
+{q:'What is the past tense of “go”?',o:['goed','gone','went'],a:2},
+{q:'Complete: She ___ happy.',o:['is','are','am'],a:0}
+];
+let qi=0;
+function renderQuiz(){
+let q=questions[qi];
+document.getElementById('quizBox').innerHTML='<p style="margin:12px 0"><b>Q'+(qi+1)+'. '+q.q+'</b></p>'+q.o.map((x,i)=>`<button class="option" onclick="answer(${i})">${x}</button>`).join('');
+}
+function answer(i){
+if(i===questions[qi].a){state.score++;alert('Correct! ✅')}else alert('Try again. 🙂');
+qi=(qi+1)%questions.length;save();renderQuiz();
+}
+function resetProgress(){if(confirm('Reset all progress?')){state.sessions=0;state.score=0;state.lessons=0;save()}}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBtn').style.display='block'});
+document.getElementById('installBtn').onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt=null};
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js').catch(console.error);
+updateProgress();renderQuiz();
+</script>
+</body>
+</html>
